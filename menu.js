@@ -6,7 +6,7 @@ let game;
 function preload(){//carregar imagens
   butImg = loadImage('assets/Button_PH.png');
   bgImg = loadImage('assets/Fundo_Matemagica.png')
-
+  group = new Group();
 }
 function setup() {
   createCanvas(720, 720);
@@ -19,10 +19,10 @@ function setup() {
 function draw() {
   //definir imagem de fundo
   background(0);
-  image(bgImg, width/2, height/2)
+
   if(menu == 0){
     //Menu Principal
-    
+    image(bgImg, width/2, height/2)
     fill(0)
     textSize(32)
     text("☼ MATEMÁGICA ☼", width/2, (height/2) - 120 )

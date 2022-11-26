@@ -1,6 +1,6 @@
 let x1, x2, result;
 let win = false;
-let player, piso, resp;
+let player, chaoD, resp;
 class Jogo{
   update(){ //Manter jogo rodando
     background(230);
@@ -55,19 +55,22 @@ function StartFase(){ //Iniciar a fase;
     text(x2, 0, 0);
     textAlign(CENTER, CENTER);
     }
+    CarregarFase();
   //Invocar e definir propriedades do jogador;
-  player = new Sprite(100, 600, 40, 60);
+  player = new Sprite(100, 550, 40, 60);
   player.color = color(150, 135, 160);
   player.bounciness = 0;
   player.layer = 2;
   player.overlaps(resp);
   
+  chaoD = new Sprite(100, 515, 35, 10);
+  chaoD.overlaps(group);
+  chaoD.overlaps(player);
+  chaoD.color = color(0, 0, 0, 0)
+  
   // gravidade e plataforma;
   world.gravity.y = 25;
-  piso = new Sprite(width/2, height - 30, width, 60);
-  piso.collider = 'static';
-  piso.color = color(0)
-  piso.bounciness = 0.1;
+  group.bounciness = 0.01;
   }
 
 function keyDetect(){ // detecção de teclado e movimento do jogador
@@ -81,9 +84,10 @@ function keyDetect(){ // detecção de teclado e movimento do jogador
   else{
     player.vel.x = 0;
   }
-  
   //pulo
-  if((kb.presses('up') || kb.presses('ArrowUp')) && player.colliding(piso)){
-    player.vel.y = 120;
+  chaoD.x = player.x;
+  chaoD.y = player.y + 30;
+  if((kb.presses('up') || kb.presses('ArrowUp')) && chaoD.overlapping(group)){
+    player.addSpeed(1300, 90);
   }
 }
