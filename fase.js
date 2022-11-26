@@ -14,9 +14,9 @@ var fase = [
   ];
 
 let tS, b;
-var group;
 
-function CarregarFase(){
+function CarregarFase(group){
+  
   tS = width/12;
     for(let i = 0; i < fase.length; i++){
       let x = i%12;

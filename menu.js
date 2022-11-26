@@ -6,7 +6,6 @@ let game;
 function preload(){//carregar imagens
   butImg = loadImage('assets/Button_PH.png');
   bgImg = loadImage('assets/Fundo_Matemagica.png')
-  group = new Group();
 }
 function setup() {
   createCanvas(720, 720);

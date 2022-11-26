@@ -1,6 +1,7 @@
 let x1, x2, result;
 let win = false;
 let player, chaoD, resp;
+var faseTile;
 class Jogo{
   update(){ //Manter jogo rodando
     background(230);
@@ -17,11 +18,22 @@ class Jogo{
     else{ // Após vencer a fase
       text(x1 + ' + ' + x2 + ' = ' + result, width/2, 100);
       textSize(20);
-      text('VOCÊ VENCEU!', width/2, 150);
+      text('VOCÊ VENCEU! \n Aperte x para passar de fase', width/2, 150);
+      
+      if(kb.presses('x')){
+        player.remove();
+        chaoD.remove();
+        faseTile.removeAll();
+        faseTile.remove();
+        resp.remove();
+        
+        StartFase();
+      }
     }
     //detecção de input e travar rotação do player
     keyDetect();
     player.rotation = 0;
+    player.rotationSpeed = 0;
     //vitória
     if(player.overlaps(resp)){
       resp.remove();
@@ -30,13 +42,17 @@ class Jogo{
     //retorno ao menu
     if(kb.presses('escape')){
       player.remove();
-      piso.remove();
+      chaoD.remove();
+      faseTile.removeAll();
+      faseTile.remove();
       resp.remove();
       sceneLoad(0);
     }
   }
 }
 function StartFase(){ //Iniciar a fase;
+  faseTile = new Group();
+  CarregarFase(faseTile);
   win = false;
   //Definir conta aleatória
   result = parseInt(random(5, 15));
@@ -55,22 +71,24 @@ function StartFase(){ //Iniciar a fase;
     text(x2, 0, 0);
     textAlign(CENTER, CENTER);
     }
-    CarregarFase();
   //Invocar e definir propriedades do jogador;
   player = new Sprite(100, 550, 40, 60);
   player.color = color(150, 135, 160);
   player.bounciness = 0;
   player.layer = 2;
   player.overlaps(resp);
+  player.removed = false;
   
   chaoD = new Sprite(100, 515, 35, 10);
-  chaoD.overlaps(group);
+  chaoD.overlaps(faseTile);
   chaoD.overlaps(player);
-  chaoD.color = color(0, 0, 0, 0)
+  chaoD.removed = false;
+  chaoD.color = color(0, 0, 0, 25)
   
   // gravidade e plataforma;
   world.gravity.y = 25;
-  group.bounciness = 0.01;
+  faseTile.bounciness = 0.01;
+  faseTile.removed = false;
   }
 
 function keyDetect(){ // detecção de teclado e movimento do jogador
@@ -85,9 +103,12 @@ function keyDetect(){ // detecção de teclado e movimento do jogador
     player.vel.x = 0;
   }
   //pulo
+  if(chaoD.overlapping(faseTile)){
+    console.log('chao')
+  }
   chaoD.x = player.x;
   chaoD.y = player.y + 30;
-  if((kb.presses('up') || kb.presses('ArrowUp')) && chaoD.overlapping(group)){
+  if((kb.presses('up') || kb.presses('ArrowUp')) && chaoD.overlapping(faseTile)){
     player.addSpeed(1300, 90);
   }
 }
