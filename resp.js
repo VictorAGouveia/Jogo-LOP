@@ -9,7 +9,7 @@ var Bloco;
 function Resposta(){
   //Definir Fase
   if(faseAt == 0){
-    faseAt = 5;
+    faseAt = 1;
   }
   else if(fasePre == 0){
     faseAt++;
