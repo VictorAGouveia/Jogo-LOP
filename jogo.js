@@ -1,24 +1,90 @@
-let x1, x2, result;
+var x1, x2, result;
+var msg, msgW;
+var caixaImg;
+var bgJogo;
 let win = false;
-let player, chaoD, resp;
+let player, chaoD, resp, txt;
 var faseTile;
+
+function StartFase(){ //Iniciar a fase;
+  faseTile = new Group();
+  CarregarFase(faseTile);
+  Resposta();
+  //Invocar e definir propriedades do jogador;
+  player = new Sprite(100, 550, 40, 60);
+  player.color = color(150, 135, 160);
+  player.bounciness = 0;
+  player.layer = 2;
+  player.overlaps(resp);
+  
+  chaoD = new Sprite(100, 515, 35, 10);
+  chaoD.overlaps(faseTile);
+  chaoD.overlaps(player);
+  chaoD.color = color(0, 0, 0, 25)
+  
+  // gravidade e plataforma;
+  world.gravity.y = 25;
+  faseTile.bounciness = 0.01;
+  
+  txt = new Sprite(0,0)
+  txt.removeColliders();
+  txt.static = true;
+  txt.color = color(0,0,0)
+  txt.draw = () => {
+    TextoFase();
+  }
+  
+  }
+
 class Jogo{
   update(){ //Manter jogo rodando
-    background(230);
-    fill(15);
-    //Aviso como voltar pro menu
-      textSize(20);
-      text('Aperte ESC para voltar ao menu', width/2, 50);
-    //Texto da pergunta 
+    background(0);
+    image(bgJogo, width/2, height/2, width, height)
+
+    //detecção de input e travar rotação do player
+    keyDetect();
+    player.rotation = 0;
+    player.rotationSpeed = 0;
+    //vitória
+    player.overlapping(Bloco, Ganhar)
+    //retorno ao menu
+    if(kb.presses('escape')){
+      fasePre = faseAt;
+      player.remove();
+      chaoD.remove();
+      faseTile.removeAll();
+      faseTile.remove();
+      resp.remove();
+      txt.remove();
+      Bloco.removeAll();
+      Bloco.remove();
+      sceneLoad(0);
+    }
+    txt.update()
+  }
+}
+function Ganhar(player, blc){
+  if(Bloco.indexOf(blc) == 0){
+    win = true;
+  }
+  blc.remove();
+}
+function TextoFase(){
+  //Aviso como voltar pro menu
+  image(caixaImg, width/2, 86, 50*caixaImg.width/tS, 50*caixaImg.height/tS)
+  textSize(20);
+  text('Fase: ' + faseAt, width/2, (50*caixaImg.height/tS/2)-45);
+  
+  //Texto da pergunta 
     textSize(50);
     textAlign(CENTER, CENTER);
     if(!win){
-      text(x1 + ' + _ = ' + result, width/2, 100);
+      text(msg, width/2, ((50*caixaImg.height/tS)/2));
     }
     else{ // Após vencer a fase
-      text(x1 + ' + ' + x2 + ' = ' + result, width/2, 100);
+      text(msgW, width/2, ((50*caixaImg.height/tS/2)));
       textSize(20);
-      text('VOCÊ VENCEU! \n Aperte x para passar de fase', width/2, 150);
+      text('Aperte X para passar de fase', width/2, ((50*caixaImg.height/tS)/2)+50);
       
       if(kb.presses('x')){
         player.remove();
@@ -26,70 +92,19 @@ class Jogo{
         faseTile.removeAll();
         faseTile.remove();
         resp.remove();
-        
-        StartFase();
+        txt.remove();
+        Bloco.removeAll();
+        Bloco.remove();
+        if(faseAt < 20){
+          StartFase();
+        }
+        else{
+          txt.remove();
+          menu = 3;
+        }
       }
     }
-    //detecção de input e travar rotação do player
-    keyDetect();
-    player.rotation = 0;
-    player.rotationSpeed = 0;
-    //vitória
-    if(player.overlaps(resp)){
-      resp.remove();
-      win = true;
-    }
-    //retorno ao menu
-    if(kb.presses('escape')){
-      player.remove();
-      chaoD.remove();
-      faseTile.removeAll();
-      faseTile.remove();
-      resp.remove();
-      sceneLoad(0);
-    }
-  }
 }
-function StartFase(){ //Iniciar a fase;
-  faseTile = new Group();
-  CarregarFase(faseTile);
-  win = false;
-  //Definir conta aleatória
-  result = parseInt(random(5, 15));
-  x1 = parseInt(random(1, result-1));
-  x2 = result - x1;
-  //Criar bloco da resposta;
-  resp = new Sprite(600, 500, 60, 60);
-  resp.collider = 'static'
-  resp.draw= () => {
-    fill(214, 153, 11);
-    rect(0, 0, 60);
-    
-    fill(0);
-    textSize(30);
-    textStyle(BOLD);
-    text(x2, 0, 0);
-    textAlign(CENTER, CENTER);
-    }
-  //Invocar e definir propriedades do jogador;
-  player = new Sprite(100, 550, 40, 60);
-  player.color = color(150, 135, 160);
-  player.bounciness = 0;
-  player.layer = 2;
-  player.overlaps(resp);
-  player.removed = false;
-  
-  chaoD = new Sprite(100, 515, 35, 10);
-  chaoD.overlaps(faseTile);
-  chaoD.overlaps(player);
-  chaoD.removed = false;
-  chaoD.color = color(0, 0, 0, 25)
-  
-  // gravidade e plataforma;
-  world.gravity.y = 25;
-  faseTile.bounciness = 0.01;
-  faseTile.removed = false;
-  }
 
 function keyDetect(){ // detecção de teclado e movimento do jogador
   //movimento horizontal
@@ -104,7 +119,6 @@ function keyDetect(){ // detecção de teclado e movimento do jogador
   }
   //pulo
   if(chaoD.overlapping(faseTile)){
-    console.log('chao')
   }
   chaoD.x = player.x;
   chaoD.y = player.y + 30;

@@ -1,17 +1,22 @@
 let butImg, bgImg;
 let key;
-let menu = 0;
+var menu = 0;
 let game;
 
 function preload(){//carregar imagens
   butImg = loadImage('assets/Button_PH.png');
-  bgImg = loadImage('assets/Fundo_Matemagica.png')
+  bgImg = loadImage('assets/Fundo_Matemagica.png');
+  bgJogo = loadImage('assets/Fundo_Jogo.png')
+  caixaImg = loadImage('assets/Caixa_Info.png');
+  blocoImg = loadImage('assets/Bloco_Resposta.png');
 }
 function setup() {
   createCanvas(720, 720);
   frameRate(30);
   rectMode(RADIUS);
   imageMode(CENTER);
+  faseAt = 0;
+  fasePre = 0;
   game = new Jogo();
 }
 
@@ -32,6 +37,8 @@ function draw() {
   }
   
   if(menu == 1){//Menu de Créditos
+    image(bgImg, width/2, height/2)
+    fill(0)
     //Nome dos Desenvolvedores
     new TextGen('DESENVOLVEDORES', width/2, height/2 -120, 26, CENTER, CENTER, BOLD, 0)
     stroke(255)
@@ -39,10 +46,11 @@ function draw() {
     new TextGen('Dante Mendes Gomes', width/2, height/2 - 40, 26, CENTER, CENTER, NORMAL, 0)
     new TextGen('Victor de Alcantara Gouveia', width/2, height/2, 26, CENTER, CENTER, NORMAL, 0)
     new TextGen('Sávio Rafael Marques de Alcântara', width/2, height/2 + 40, 26, CENTER, CENTER, NORMAL, 0)
+    new TextGen('Arte da Fase por Buch em OpenGameArt.org', width/2, height/2 + 90, 15, CENTER, CENTER, NORMAL, 0)
     //Botão de voltar
     noStroke()
     new Button(80, height - 50, butImg, 'VOLTAR', sceneLoad, 0, 0.6)
-    if(keyIsPressed && keyCode == ESCAPE){
+    if(kb.presses('escape')){
       sceneLoad(0);
     }
   }
@@ -50,6 +58,15 @@ function draw() {
     //Executar o "update" do jogo
     game.update();
     }
+  if(menu == 3){
+    image(bgImg, width/2, height/2);
+    fill(0);
+    new TextGen('VOCÊ VENCEU O JOGO!!!', width/2, height/2, 50, CENTER, CENTER, BOLD, 0);
+    new TextGen('Aperte ESC para voltar ao menu', width/2, height/2 + 120, 25, CENTER, CENTER, BOLD, 0);
+    if(kb.presses('escape')){
+      menu = 0;
+    }
+  }
 }
 
 function sceneLoad(n){ //Carregar "Cena" diferente
