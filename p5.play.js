@@ -1,7 +1,7 @@
 /**
  * p5.play
  *
- * @version 3
+ * @version 3.3
  * @author quinton-ashley
  * @year 2022
  * @license gpl-v3-only
@@ -197,7 +197,16 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 					}
 					let abr = h.slice(0, 2);
 					// h is a collider type
-					if (abr == 'dy' || abr == 'st' || abr == 'ki' || abr == 'no') {
+					if (
+						h == 'd' ||
+						h == 's' ||
+						h == 'k' ||
+						h == 'n' ||
+						abr == 'dy' ||
+						abr == 'st' ||
+						abr == 'ki' ||
+						abr == 'no'
+					) {
 						collider = h;
 					} else {
 						// h is the name of a regular polygon
@@ -218,15 +227,6 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			} else if (isNaN(w)) {
 				collider = w;
 				w = undefined;
-			}
-
-			if (collider !== undefined) {
-				collider = collider.toLowerCase();
-				let abr = collider.slice(0, 2);
-				if (abr == 'dy') collider = 'dynamic';
-				if (abr == 'st') collider = 'static';
-				if (abr == 'ki') collider = 'kinematic';
-				if (abr == 'no') collider = 'none';
 			}
 
 			/**
@@ -327,7 +327,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			this._collisions = new Map();
 			this._overlappers = new Map();
 
-			this.tileSize = group.tileSize;
+			this.tileSize = group.tileSize || 1;
 
 			let _this = this;
 
@@ -439,6 +439,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			if (!collider || typeof collider != 'string') {
 				collider = 'dynamic';
 			}
+			this.collider = collider;
 
 			x ??= group.x;
 			if (x === undefined) {
@@ -458,8 +459,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 
 			this.mouse = new SpriteMouse();
 
-			if (collider != 'none' && collider != 'n') {
-				this._collider = collider;
+			if (this.collider != 'none') {
 				this.addCollider(0, 0, w, h);
 			} else {
 				this.w = w || (this.tileSize > 1 ? 1 : 50);
@@ -569,6 +569,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			this.color ??= this.p.color(this.p.random(30, 245), this.p.random(30, 245), this.p.random(30, 245));
 
 			this.textColor ??= this.p.color(0);
+			this.textSize ??= this.tileSize == 1 ? (this.p.canvas ? this.p.textSize() : 12) : 0.8;
 
 			let shouldCreateSensor = false;
 			for (let g of this.groups) {
@@ -631,6 +632,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 				let vert = { x: 0, y: 0 };
 				let min = { x: 0, y: 0 };
 				let max = { x: 0, y: 0 };
+				let least = { x: Number.MAX_SAFE_INTEGER, y: Number.MAX_SAFE_INTEGER };
 
 				// if the path is an array of position arrays
 				let usesVertices = Array.isArray(path[0]);
@@ -650,6 +652,8 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 					for (let i = 0; i < path.length; i++) {
 						if (this._vertexMode) {
 							if (i == 0) continue;
+							if (path[i][0] < least.x) least.x = path[i][0];
+							if (path[i][1] < least.y) least.y = path[i][1];
 							vert.x = path[i][0] - this.x;
 							vert.y = path[i][1] - this.y;
 						} else {
@@ -657,6 +661,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 							vert.y += path[i][1];
 						}
 						vecs.push({ x: vert.x, y: vert.y });
+
 						checkVert();
 					}
 				} else {
@@ -693,19 +698,26 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 				h = max.y - min.y;
 				this._hh = h * 0.5;
 
-				if (this.originMode == 'center') {
+				if (shape == 'polygon' && this._vertexMode) {
+					this.x = least.x + this._hw;
+					this.y = least.y + this._hh;
+					log(this.x, this.y);
+				}
+
+				if (this.originMode == 'start' && shape == 'chain') {
+					for (let i = 0; i < vecs.length; i++) {
+						let vec = vecs[i];
+						vecs[i] = new pl.Vec2((vec.x * this.tileSize) / plScale, (vec.y * this.tileSize) / plScale);
+					}
+				} else {
+					// origin is center
+					this.originMode = 'center';
 					for (let i = 0; i < vecs.length; i++) {
 						let vec = vecs[i];
 						vecs[i] = new pl.Vec2(
 							((vec.x - this._hw - min.x) * this.tileSize) / plScale,
 							((vec.y - this._hh - min.y) * this.tileSize) / plScale
 						);
-					}
-				} else {
-					// origin is start
-					for (let i = 0; i < vecs.length; i++) {
-						let vec = vecs[i];
-						vecs[i] = new pl.Vec2((vec.x * this.tileSize) / plScale, (vec.y * this.tileSize) / plScale);
 					}
 				}
 				if (shape == 'polygon') {
@@ -959,7 +971,6 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		get animation() {
 			return this._animation;
 		}
-
 		set animation(val) {
 			this.changeAni(val);
 		}
@@ -967,7 +978,6 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		get ani() {
 			return this._animation;
 		}
-
 		set ani(val) {
 			this.changeAni(val);
 		}
@@ -1005,11 +1015,20 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		get collider() {
 			return this._collider;
 		}
-
 		set collider(val) {
+			val = val.toLowerCase();
+			let c = val[0];
+			if (c == 'd') val = 'dynamic';
+			if (c == 's') val = 'static';
+			if (c == 'k') val = 'kinematic';
+			if (c == 'n') val = 'none';
+
 			if (this._collider == val) return;
+
+			let oldCollider = this._collider;
+
 			this._collider = val;
-			this._reset();
+			if (oldCollider !== undefined) this._reset();
 		}
 
 		_reset() {
@@ -1055,7 +1074,6 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		get color() {
 			return this._color;
 		}
-
 		set color(val) {
 			if (val instanceof p5.Color) {
 				this._color = val;
@@ -1069,7 +1087,6 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		get shapeColor() {
 			return this._color;
 		}
-
 		set shapeColor(val) {
 			this.color = val;
 		}
@@ -1083,7 +1100,6 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		get textColor() {
 			return this._textColor;
 		}
-
 		set textColor(val) {
 			if (val instanceof p5.Color) {
 				this._textColor = val;
@@ -1154,7 +1170,9 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 					downright: 45,
 					rightdown: 45,
 					downleft: 135,
-					leftdown: 135
+					leftdown: 135,
+					forward: this.rotation,
+					backward: this.rotation + 180
 				};
 				val = dirs[dir];
 			}
@@ -1308,8 +1326,14 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		get img() {
 			return this._animation;
 		}
-
 		set img(val) {
+			this.changeAni(val);
+		}
+
+		get image() {
+			return this._animation;
+		}
+		set image(val) {
 			this.changeAni(val);
 		}
 
@@ -1434,7 +1458,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		}
 
 		/**
-		 * Scale of the sprite's physics body and appearance. Default is 1.
+		 * Scale of the sprite's physics body. Default is 1.
 		 *
 		 * @property scale
 		 * @type {Number}
@@ -1442,9 +1466,8 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		get scale() {
 			return this._scale;
 		}
-
 		set scale(val) {
-			if (val == 1) return;
+			if (val == this._scale) return;
 			this._w *= val;
 			this._hw *= val;
 			if (this._h) {
@@ -1453,10 +1476,6 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			}
 			this._resizeCollider(val);
 			this._scale = val;
-			if (this.ani) {
-				this.ani.scale.x = val;
-				this.ani.scale.y = val;
-			}
 		}
 
 		/**
@@ -1957,7 +1976,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		 */
 		_draw() {
 			if (this.animation && !this.debug) {
-				this.animation.draw(0, 0, undefined, this._scale, this._scale);
+				this.animation.draw();
 			} else if (this.fixture != null) {
 				if (this._shape == 'chain') this.p.stroke(this.color);
 				for (let fxt = this.fixtureList; fxt; fxt = fxt.getNext()) {
@@ -1966,15 +1985,15 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			} else {
 				this.p.stroke(120);
 				if (this._shape == 'box') {
-					this.p.rect(0, 0, this.w, this.h);
+					this.p.rect(0, 0, this.w * this.tileSize, this.h * this.tileSize);
 				} else if (this._shape == 'circle') {
-					this.p.circle(0, 0, this.d);
+					this.p.circle(0, 0, this.d * this.tileSize);
 				}
 			}
 			if (this.text) {
 				this.p.textAlign(this.p.CENTER, this.p.CENTER);
 				this.p.fill(this.textColor);
-				this.p.textSize(this.textSize);
+				this.p.textSize(this.textSize * this.tileSize);
 				this.p.text(this.text, 0, 0);
 			}
 		}
@@ -2178,25 +2197,35 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		 * Move the sprite a certain distance from its current position.
 		 *
 		 * @method move
+		 * @param {Number} distance [optional]
 		 * @param {Number|String} direction [optional]
 		 * @param {Number} speed [optional]
-		 * @param {Number} distance [optional]
 		 * @returns {Promise} resolves when the movement is complete or cancelled
+		 *
+		 * @example
+		 * sprite.move(distance);
+		 * sprite.move(distance, direction);
+		 * sprite.move(distance, direction, speed);
+		 *
+		 * sprite.move(directionName);
+		 * sprite.move(directionName, speed);
+		 * sprite.move(directionName, speed, distance); // deprecated usage
 		 */
-		move(direction, speed, distance) {
+		move(distance, direction, speed) {
 			let dirNameMode = isNaN(arguments[0]);
-			if (arguments.length == 1) {
-				if (!dirNameMode) {
-					// move(distance)
-					direction = this.direction;
-					distance = arguments[0];
-				} else {
-					// move(direction)
-					this.direction = direction;
+			if (dirNameMode) {
+				direction = arguments[0];
+				speed = arguments[1];
+				distance = arguments[2];
+				if (distance !== undefined) {
+					console.warn(
+						`In p5.play v3.3.0 the parameter ordering for the move() function was changed to: move(distance, direction, speed).`
+					);
 				}
-			} else if (arguments.length > 1) {
-				this.direction = direction;
+			} else {
+				dirNameMode = isNaN(direction);
 			}
+			if (direction !== undefined) this.direction = direction;
 			distance ??= 1;
 			let x = this.x + this.p.cos(this.direction) * distance;
 			let y = this.y + this.p.sin(this.direction) * distance;
@@ -2258,7 +2287,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			speed ??= 1;
 			if (speed <= 0) {
 				console.warn('sprite.move: speed should be a positive number');
-				speed = Math.abs(speed);
+				return;
 			}
 
 			let a = this.dest.y - this.y;
@@ -2336,27 +2365,27 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		}
 
 		/**
-		 * TODO: Rotates the sprite towards a position or angle.
-		 *
 		 * @method rotateTowards
-		 * @param {*} angle
-		 * @param {*} tracking
+		 * @param {*} x position to rotate towards
+		 * @param {*} y position to rotate towards
+		 * @param {*} facing rotation angle the sprite should be at when "facing" the position, default is 0
+		 * @param {*} tracking percent of the distance to rotate on each frame towards the target angle, default is 0.1 (10%)
 		 */
-		rotateTowards(x, y, tracking) {
-			throw new Error("sprite.rotateTowards This function hasn't been implemented yet.");
-			// tracking ??= 0.1;
-			// console.log(angle, this.rotation, ang);
-			// this.angularVelocity = (angle - this.rotation) * tracking;
+		rotateTowards(x, y, facing, tracking) {
+			let angle = this.angleTo(x, y, facing);
+			tracking ??= 0.1;
+			this.rotationSpeed = angle * tracking;
 		}
 
 		/**
-		 * Finds the minimium amount the sprite would have to rotate to "face" a position
-		 * at a rotation.
+		 * Finds the minimium amount the sprite would have to rotate to
+		 * "face" a position at a rotation.
 		 *
+		 * @method angleTo
 		 * @param {Number|Object} x|position
 		 * @param {Number} y
 		 * @param {Number} facing rotation angle the sprite should be at when "facing" the position, default is 0
-		 * @returns
+		 * @returns {Number} minimum angle of rotation to face the position
 		 */
 		angleTo(x, y, facing) {
 			if (typeof x != 'number') {
@@ -2386,6 +2415,16 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			return Math.abs(dist1) < Math.abs(dist2) ? dist1 : dist2;
 		}
 
+		/**
+		 * Rotates the sprite to a position at a rotation.
+		 *
+		 * @method rotateTo
+		 * @param {Number|Object} x|position
+		 * @param {Number} y
+		 * @param {Number} facing rotation angle the sprite should be at when "facing" the position, default is 0
+		 * @param {Number} speed the amount of rotation per frame, default is 1
+		 * @returns Promise
+		 */
 		rotateTo(x, y, facing, speed) {
 			let angle = this.angleTo(x, y, facing);
 
@@ -2395,18 +2434,19 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		}
 
 		/**
-		 * Rotates the sprite by an amount at a specified speed.
+		 * Rotates the sprite by an amount at a specified angles per frame speed.
 		 *
 		 * @method rotate
-		 * @param {Number} angle
-		 * @param {Number} speed
+		 * @param {Number} angle the amount to rotate the sprite
+		 * @param {Number} speed the amount of rotation per frame, default is 1
+		 * @returns Promise
 		 */
 		rotate(angle, speed) {
 			if (isNaN(angle)) throw new FriendlyError();
 			if (angle == 0) return;
 			let absA = Math.abs(angle);
-			speed ??= absA;
-			if (absA < speed) return;
+			speed ??= 1;
+			if (speed > absA) speed = absA;
 
 			let ang = this.rotation + angle;
 			let cw = angle > 0;
@@ -2418,10 +2458,22 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			let _rotateIdx = this._rotateIdx;
 
 			return (async () => {
-				while (frames > 0) {
-					if (this._rotateIdx != _rotateIdx) return;
+				if (frames > 1) {
+					while (frames > 0) {
+						if (this._rotateIdx != _rotateIdx) return;
+						await p5.prototype.delay();
+						frames--;
+					}
+
+					while (Math.abs(this.rotationSpeed) < Math.abs(ang - this.rotation)) {
+						await p5.prototype.delay();
+					}
+					if (Math.abs(ang - this.rotation) > 0.01) {
+						this.rotationSpeed = ang - this.rotation;
+						await p5.prototype.delay();
+					}
+				} else {
 					await p5.prototype.delay();
-					frames--;
 				}
 				this.rotationSpeed = 0;
 				this.rotation = ang;
@@ -2721,6 +2773,25 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			return this.animation.name;
 		}
 	}
+
+	this.Turtle = function (size) {
+		if (pInst.allSprites.tileSize > 1) {
+			throw new Error(`Turtle can't be used when allSprites.tileSize is greater than 1.`);
+		}
+		size ??= 25;
+		let t = new Sprite(pInst.width * 0.5, pInst.height * 0.5, [
+			[size, size * 0.4],
+			[-size, size * 0.4],
+			[0, size * -0.8]
+		]);
+		t.color = 'green';
+		t._isTurtleSprite = true;
+		let _move = t.move;
+		t.move = function (distance) {
+			return _move.call(this, this.rotation, 1, distance);
+		};
+		return t;
+	};
 
 	/**
 	 * Look at the Animation reference pages before reading these docs.
@@ -3108,8 +3179,8 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		 * @param {Number} [sy] scale y
 		 */
 		draw(x, y, r, sx, sy) {
-			this.x = x;
-			this.y = y;
+			this.x = x || 0;
+			this.y = y || 0;
 
 			if (!this.visible) return;
 
@@ -3588,13 +3659,34 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		get ani() {
 			return this._animation;
 		}
+		set ani(val) {
+			this.addAni(val);
+			for (let s of this) s.changeAni(val);
+		}
 
 		get animation() {
 			return this._animation;
 		}
+		set animation(val) {
+			this.ani = val;
+		}
 
 		get anis() {
 			return this.animations;
+		}
+
+		get img() {
+			return this._animation;
+		}
+		set img(val) {
+			this.ani = val;
+		}
+
+		get image() {
+			return this._animation;
+		}
+		set image(val) {
+			this.ani = val;
 		}
 
 		set amount(val) {
@@ -3781,6 +3873,17 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		}
 
 		/**
+		 * @method move
+		 */
+		move(distance, direction, speed) {
+			let movements = [];
+			for (let s of this) {
+				movements.push(s.move(distance, direction, speed));
+			}
+			return Promise.all(movements);
+		}
+
+		/**
 		 * @method moveTo
 		 */
 		moveTo(x, y, speed) {
@@ -3791,7 +3894,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 					x: s.x - centroid.x + x,
 					y: s.y - centroid.y + y
 				};
-				movements.push(s.move(dest.x, dest.y, speed));
+				movements.push(s.moveTo(dest.x, dest.y, speed));
 			}
 			return Promise.all(movements);
 		}
@@ -4687,10 +4790,8 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		// Query the world for overlapping shapes.
 		let fxts = [];
 		pInst.world.queryAABB(aabb, (fxt) => {
-			if (!fxt.getBody().isStatic()) {
-				if (fxt.getShape().testPoint(fxt.getBody().getTransform(), convertedPoint)) {
-					fxts.push(fxt);
-				}
+			if (fxt.getShape().testPoint(fxt.getBody().getTransform(), convertedPoint)) {
+				fxts.push(fxt);
 			}
 			return true;
 		});
@@ -5137,25 +5238,42 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 	this.createCanvas = function () {
 		let args = [...arguments];
 		let isFullScreen = false;
+		let pixelated = false;
+		let w, h, ratio;
 		if (typeof args[0] == 'string') {
-			let ratio = args[0].split(':');
+			ratio = args[0].split(':');
+		}
+		if (!args.length) {
+			args[0] = window.innerWidth;
+			args[1] = window.innerHeight;
+			isFullScreen = true;
+		} else if (typeof args[0] == 'number' && typeof args[1] != 'number') {
+			args[2] = args[1];
+			args[1] = args[0];
+		}
+
+		if (args[2] == 'pixelated') {
+			pixelated = true;
+			isFullScreen = true;
+			ratio = [args[0], args[1]];
+		}
+		if (ratio) {
 			let rW = Number(ratio[0]);
 			let rH = Number(ratio[1]);
 
-			let w = window.innerWidth;
-			let h = (window.innerWidth * rH) / rW;
+			w = window.innerWidth;
+			h = (window.innerWidth * rH) / rW;
 			if (h > window.innerHeight) {
 				w = (window.innerHeight * rW) / rH;
 				h = window.innerHeight;
 			}
-			args[0] = Math.round(w);
-			args[1] = Math.round(h);
-		} else if (args.length == 1) {
-			args[1] = args[0];
-		} else if (!args.length) {
-			args[0] = window.innerWidth;
-			args[1] = window.innerHeight;
-			isFullScreen = true;
+			w = Math.round(w);
+			h = Math.round(h);
+
+			if (!pixelated) {
+				args[0] = w;
+				args[1] = h;
+			}
 		}
 		if (args.length < 3) args[2] = 'p2d';
 		let can = _createCanvas.call(pInst, ...args);
@@ -5185,32 +5303,47 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 		});
 		this.world.resize();
 		if (!userDisabledP5Errors) p5.disableFriendlyErrors = false;
-		let style = document.createElement('style');
 
 		/* prevent callout to copy image, etc when tap to hold */
 		/* prevent webkit from resizing text to fit */
 		/* prevent copy paste, to allow, change 'none' to 'text' */
-		style.innerHTML = `
-		canvas { 
-			outline: none;
-			-webkit-touch-callout: none;
-			-webkit-text-size-adjust: none;
-			-webkit-user-select: none;
-			overscroll-behavior: none;
-		}
-		main{
-			overscroll-behavior: none;
-		}`;
+		let style = `
+canvas { 
+	outline: none;
+	-webkit-touch-callout: none;
+	-webkit-text-size-adjust: none;
+	-webkit-user-select: none;
+	overscroll-behavior: none;
+}
+main{
+	overscroll-behavior: none;
+}`;
 		if (isFullScreen) {
-			style.innerHTML = 'html,\nbody,\n' + style.innerHTML;
-			style.innerHTML += `
-			html, body {
-				margin: 0;
-				padding: 0;
-				overflow: hidden;
-			}`;
+			style = 'html,\nbody,\n' + style;
+			style += `
+html, body {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+main {
+	margin: auto;
+	display: flex;
+	align-content: center;
+	justify-content: center;
+}`;
 		}
-		document.head.appendChild(style);
+		if (pixelated) {
+			style += `
+canvas {
+	image-rendering: pixelated;
+	width: ${w}px!important;
+	height: ${h}px!important;
+}`;
+		}
+		let styleElem = document.createElement('style');
+		styleElem.innerHTML = style;
+		document.head.appendChild(styleElem);
 
 		let idx = navigator.userAgent.indexOf('iPhone OS');
 		if (idx > -1) {
@@ -5223,6 +5356,11 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 			this.p5play.os.version = version;
 		} else if (navigator.userAgentData !== undefined) {
 			this.p5play.os.platform = navigator.userAgentData.platform;
+		}
+
+		if (pixelated) {
+			pInst.pixelDensity(1);
+			pInst.noSmooth();
 		}
 
 		return can;
@@ -5306,7 +5444,7 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 	 * @param {number} [height]
 	 * @param {function} [callback]
 	 */
-	this.loadImage = function () {
+	this.loadImg = this.loadImage = function () {
 		let args = arguments;
 		let url = args[0];
 		let img = pInst.p5play.images[url];
@@ -5781,14 +5919,16 @@ p5.prototype.registerMethod('init', function p5PlayInit() {
 	}
 
 	/**
-	 * Deprecated method, use kb.pressing(key) instead.
+	 * Deprecated, use kb.pressing(key) instead.
 	 *
 	 * @deprecated
 	 * @method keyIsDown
 	 * @param {String} key
 	 */
-	p5.prototype.keyIsDown = function (key) {
-		return this.kb.pressing(key);
+	p5.prototype.keyIsDown = function (keyCode) {
+		throw new Error(
+			`The p5.js keyIsDown function is outdated and can't be used in p5.play. Trust me, you'll see that the p5.play kb.pressing function is much better. It uses key name strings that are easier to write and easier to read! https://p5play.org/learn/input_devices.html The p5.js keyIsDown function relies on key codes and custom constants for key codes, which are not only hard to remember but were also deprecated in the JavaScript language standards over six years ago and shouldn't be used in new projects. More info: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode`
+		);
 	};
 
 	function getKeyFromCode(e) {
