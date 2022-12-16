@@ -1,28 +1,63 @@
 var x1, x2, result;
+var jumpU, jumpD, walk, idle;
 var msg, msgW;
 var caixaImg;
 var bgJogo;
 let win = false;
-let pulo;
+let pulo, dir;
 let player, chaoD, resp, txt;
 var faseTile;
+var certo, errado;
 
 function StartFase(){ //Iniciar a fase;
   faseTile = new Group();
   CarregarFase(faseTile);
   Resposta();
   //Invocar e definir propriedades do jogador;
-  player = new Sprite(100, 550, 40, 60);
-  player.color = color(150, 135, 160);
+  player = new Sprite(100, 550, 40, 66);
   player.bounciness = 0;
   player.layer = 2;
   player.overlaps(resp);
+  dir = 1;
+  player.addAni('idle', idle, {frameSize: [80, 112], frames: 2 });
+  player.addAni('walk', walk, {frameSize: [80, 112], frames: 4 });
+  player.addAni('jumpU', jumpU, {frameSize: [80, 112], frames: 2 });
+  player.addAni('jumpD', jumpD, {frameSize: [80, 112], frames: 2 });
+  player.draw = () => {
+    scale(tS/64);
+    player.ani.draw(0, (-tS/8)-6, 0, dir, 1);
+    player.ani.frameDelay = 5;
+    
+    if(player.vel.x > 0){
+      dir = 1;
+     }
+    if(player.vel.x < 0){
+     dir = -1;
+    }
+    
+    if(player.vel.y < 0.5 && player.vel.y > -0.5){
+      if(player.vel.x > 0){
+        player.ani = 'walk'
+      }
+      if(player.vel.x < 0){
+        player.ani = 'walk'
+      }
+      if(player.vel.x == 0){
+        player.ani = 'idle'
+      }
+    } 
+    if(player.vel.y < -0.5){
+      player.ani = 'jumpU'
+    } else if(player.vel.y > 0.5){
+      player.ani = 'jumpD'
+    }
+  }
   player.rotationLock = true;
   
-  chaoD = new Sprite(100, 515, 36, 2);
+  chaoD = new Sprite(100, 515, 36, 8);
   chaoD.overlaps(faseTile);
   chaoD.overlaps(player);
-  chaoD.color = color(0, 0, 0, 0);
+  chaoD.color = color(0, 0, 0, 100);
   chaoD.rotationLock = true;
   
   // gravidade e plataforma;
@@ -43,11 +78,13 @@ class Jogo{
   update(){ //Manter jogo rodando
     background(0);
     image(bgJogo, width/2, height/2, width, height)
-
+    
     //detecção de input e travar rotação do player
     keyDetect();
     //vitória
-    player.overlapping(Bloco, Ganhar)
+    player.overlapping(Bloco, Ganhar);
+    player.ani.play();
+    player.debug = mouse.pressing();
     //retorno ao menu
     if(kb.presses('escape')){
       fasePre = faseAt;
@@ -67,6 +104,11 @@ class Jogo{
 function Ganhar(player, blc){
   if(Bloco.indexOf(blc) == 0){
     win = true;
+    certo.play();
+  }
+  else{
+    errado.setVolume(1.5);
+    errado.play();
   }
   blc.remove();
 }
