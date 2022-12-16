@@ -11,11 +11,13 @@ function Resposta(){
   if(faseAt == 0){
     faseAt = 1;
   }
-  else if(fasePre == 0){
-    faseAt++;
-  }
   else{
-    faseAt = fasePre;
+    if(win){
+    faseAt++;
+    }
+    else{
+      faseAt = fasePre;
+    }
   }
   //Definir Tipo de conta
   contaTipo = parseInt((faseAt-1)/5);
