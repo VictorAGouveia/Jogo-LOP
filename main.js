@@ -51,13 +51,14 @@ function draw() {
     image(titulo, width/2, ty, titulo.width*(128/720)*5, titulo.height*(128/720)*5);
 
     //invocar botões do menu
-    new Button(width/2, (height/2)+ 120, butImg, butImgO, 'CRÉDITOS', sceneLoad, 1, 1)
-    new Button(width/2, height/2, butImg,  butImgO, 'JOGAR', sceneLoad, 2, 1, StartFase)
+    new Button(width/2, (height/2)+ 120, butImg, butImgO, 'CRÉDITOS', sceneLoad, 1, 1);
+    new Button(width/2, height/2, butImg,  butImgO, 'JOGAR', sceneLoad, 2, 1, StartFase);
+    new Button(width/2, (height/2)+ 240, butImg, butImgO, 'TUTORIAL', sceneLoad, 5, 1)
   }
   
   if(menu == 1){//Menu de Créditos
     image(bgImg, width/2, height/2, width, height)
-    fill(0)
+    image(titulo, width/2, (height/2)-240, titulo.width*(128/720)*3.5, titulo.height*(128/720)*3.5);
     //Nome dos Desenvolvedores
     new TextGen('DESENVOLVEDORES', width/2, height/2 -160, 40, CENTER, CENTER, BOLD, 255);
 
@@ -68,7 +69,7 @@ function draw() {
     new TextGen('Música - "Fish n Chips" por "iamoneabe" em OpenGameArt.org - Uso sob CC0', width/2, height/2 + 110, 15, CENTER, CENTER, NORMAL, 255);
     //Botão de voltar
     noStroke()
-    new Button(100, height - 70, butImg, butImgO, 'VOLTAR', sceneLoad, 0, 0.6)
+    new Button(100, height - 70, butImg, butImgO, 'VOLTAR', sceneLoad, 0, 0.75)
     if(kb.presses('escape')){
       sceneLoad(0);
     }
@@ -78,17 +79,40 @@ function draw() {
     game.update();
     }
   if(menu == 3){
-    //Tela de Fim de Jogo
-    image(bgImg, width/2, height/2);
-    fill(255);
-    new TextGen('VOCÊ VENCEU O JOGO!!!', width/2, height/2, 50, CENTER, CENTER, BOLD, 255);
-    new TextGen('Aperte ESC para voltar ao menu', width/2, height/2 + 120, 25, CENTER, CENTER, BOLD, 255);
-    faseAt = 0;
-    fasePre = 0;
-    if(kb.presses('escape')){
-      menu = 0;
-    }
+      //Tela de Fim de Jogo
+      image(bgImg, width/2, height/2);
+      new TextGen('VOCÊ VENCEU O JOGO!!!', width/2, height/2, 50, CENTER, CENTER, BOLD, 255);
+      new Button(100, height - 70, butImg, butImgO, 'MENU', sceneLoad, 0, 0.75)
+      faseAt = 0;
+      fasePre = 0;
+      if(kb.presses('escape')){
+        menu = 0;
+      }
   }
+  if(menu == 4){
+      //Tela de Derrota
+      image(bgImg, width/2, height/2);
+      new TextGen('VOCÊ PERDEU :(', width/2, height/2, 50, CENTER, CENTER, BOLD, 255);
+      new Button(100, height - 70, butImg, butImgO, 'MENU', sceneLoad, 0, 0.75)
+      if(kb.presses('escape')){
+        menu = 0;
+      }
+    }
+  if(menu == 5){
+      //Tela de Tutorial
+      image(bgImg, width/2, height/2);
+      image(titulo, width/2, (height/2)-240, titulo.width*(128/720)*3.5, titulo.height*(128/720)*3.5);
+      new TextGen('TUTORIAL', width/2, (height/2)-160, 40, CENTER, CENTER, BOLD, 255);
+      new TextGen('Use as setas para direita e esquerda ou use os', width/2, (height/2)-75, 25, CENTER, CENTER, BOLD, 255);
+    new TextGen('botões A e D para se mover.', width/2, (height/2)-50, 25, CENTER, CENTER, BOLD, 255);
+    new TextGen('Use a seta para cima ou W para pular.', width/2, (height/2), 25, CENTER, CENTER, BOLD, 255);
+    new TextGen('Uma conta vai aparecer no topo da fase.', width/2, (height/2)+50, 25, CENTER, CENTER, BOLD, 255);
+    new TextGen('\nUma conta vai aparecer no topo da fase.\nColete o bloco com a resposta correta.\nVocê só pode errar uma vez.', width/2, (height/2)+75, 25, CENTER, CENTER, BOLD, 255);
+    new Button(100, height - 70, butImg, butImgO, 'VOLTAR', sceneLoad, 0, 0.75)
+      if(kb.presses('escape')){
+        menu = 0;
+      }
+    }
 }
 
 function sceneLoad(n){ //Carregar "Cena" diferente

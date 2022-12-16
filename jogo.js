@@ -6,6 +6,7 @@ var bgJogo;
 let win = false;
 let pulo, dir;
 let player, chaoD, resp, txt;
+let falhas = 0;
 var faseTile;
 var certo, errado;
 
@@ -13,6 +14,7 @@ function StartFase(){ //Iniciar a fase;
   faseTile = new Group();
   CarregarFase(faseTile);
   Resposta();
+  console.log(contaTipo);
   //Invocar e definir propriedades do jogador;
   player = new Sprite(100, 550, 40, 66);
   player.bounciness = 0;
@@ -75,16 +77,15 @@ function StartFase(){ //Iniciar a fase;
   }
 
 class Jogo{
-  update(){ //Manter jogo rodando
+  update(){ //Manter jogo funcionando
     background(0);
     image(bgJogo, width/2, height/2, width, height)
     
-    //detecção de input e travar rotação do player
+    //detecção de inputs
     keyDetect();
     //vitória
     player.overlapping(Bloco, Ganhar);
     player.ani.play();
-    player.debug = mouse.pressing();
     //retorno ao menu
     if(kb.presses('escape')){
       fasePre = faseAt;
@@ -109,6 +110,8 @@ function Ganhar(player, blc){
   else{
     errado.setVolume(1.5);
     errado.play();
+    falhas++;
+    console.log(falhas);
   }
   blc.remove();
 }
@@ -124,6 +127,34 @@ function TextoFase(){
     textAlign(CENTER, CENTER);
     if(!win){
       text(msg, width/2, caixaImg.height*(tS/64)*(6/16));
+      if(falhas > 1){
+        player.remove();
+        chaoD.remove();
+        faseTile.removeAll();
+        faseTile.remove();
+        resp.remove();
+        txt.remove();
+        Bloco.removeAll();
+        Bloco.remove();
+        win = false;
+        console.log(contaTipo);
+        if(contaTipo == 0){
+          fasePre = 1;
+          faseAt = 1;
+        } else if(contaTipo == 1){
+          fasePre = 6;
+          faseAt = 6;
+        } else if(contaTipo == 2){
+          fasePre = 11;
+          faseAt = 11;
+        } else if(contaTipo == 3){
+          fasePre = 16;
+          faseAt = 16;
+        }
+        txt.remove();
+        falhas = 0;
+        menu = 4;
+      }
     }
     else{ // Após vencer a fase
       text(msgW, width/2, caixaImg.height*(tS/64)*(6/16));
@@ -140,6 +171,7 @@ function TextoFase(){
         txt.remove();
         Bloco.removeAll();
         Bloco.remove();
+        falhas = 0;
         if(faseAt < 20){
           StartFase();
         }
